@@ -1,0 +1,27 @@
+# PostgreSQL для Лабы 3. Запуск: docker compose up -d
+# Пароли берутся из файла .env (шаблон: .env.example).
+# Скрипты из db/init выполняются автоматически при первом создании тома с данными:
+# 01 - роли, 02 - схема и права, 03 - тестовые данные.
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: lab3-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: podcasts
+      POSTGRES_USER: podcast_owner
+      POSTGRES_PASSWORD: ${DB_OWNER_PASSWORD:?Укажите DB_OWNER_PASSWORD в .env}
+      APP_PASSWORD: ${DB_PASSWORD:?Укажите DB_PASSWORD в .env}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U podcast_owner -d podcasts"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
